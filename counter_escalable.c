@@ -32,19 +32,31 @@ void init(counter_t *c, int threshold) {
   }
 }
 
+void transferToGlobal(counter_t *c, int* cpu) {
+  pthread_mutex_lock(&c->glock);
+  c->global += c->local[*cpu];
+  pthread_mutex_unlock(&c->glock);
+  c->local[*cpu] = 0;
+}
 
 void update(counter_t *c, int cpu) {
   // int cpu = threadID % NUMCPUS;
   pthread_mutex_lock(&c->llock[cpu]);
   c->local[cpu] += 1;
   if (c->local[cpu] >= c->threshold) { // transfer to global (synchronization point)
-    pthread_mutex_lock(&c->glock);
-    c->global += c->local[cpu];
-    pthread_mutex_unlock(&c->glock);
-    c->local[cpu] = 0;
+    transferToGlobal(c, &cpu);
   }
   pthread_mutex_unlock(&c->llock[cpu]);
 }
+
+void endThread(counter_t *c, int cpu) {
+  pthread_mutex_lock(&c->llock[cpu]);
+  if(c->local[cpu] > 0) {
+    transferToGlobal(c, &cpu);
+  }
+  pthread_mutex_unlock(&c->llock[cpu]);
+}
+
 
 // get: just return global amount (which may not be perfect)
 int get(counter_t *c) {
@@ -64,6 +76,7 @@ void *thread_function(void *arg) {
     for (i = 0; i < nroIteraciones; i++) {
         update(c, cpu);
     }
+    // endThread(c, cpu);
     printf("Hilo %d terminado\n", thread_id);
     return NULL;
 }
@@ -93,8 +106,8 @@ int main(int argc, char *argv[]) {
 
   init(c, threshold);
 
-  pthread_t threads[32];
-  int thread_ids[32];
+  pthread_t threads[numThreads];
+  int thread_ids[numThreads];
 
   clock_t inicio, fin;
   double tiempo_transcurrido;
