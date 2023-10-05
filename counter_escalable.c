@@ -87,6 +87,9 @@ int main(int argc, char *argv[]) {
     threshold = atoi(argv[3]);
   }
 
+  printf("Iteraciones: %d\n", nroIteraciones);
+  printf("Threads: %d\n", numThreads);
+  printf("Threshold: %d\n", threshold);
 
   init(c, threshold);
 

@@ -51,7 +51,6 @@ void *thread_function(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
-  init(&counter);
   int numThreads = 32;
   nroIteraciones = 2000000;
   if(argc > 3) {
@@ -64,6 +63,11 @@ int main(int argc, char *argv[]) {
   if (argc > 2) {
     numThreads = atoi(argv[2]);
   }
+
+  printf("Iteraciones: %d\n", nroIteraciones);
+  printf("Threads: %d\n", numThreads);
+
+  init(&counter);
   pthread_t threads[numThreads];
   int trhead_ids[numThreads];
 
