@@ -6,6 +6,7 @@
 #include <sched.h>
 #include <time.h>
 
+int nroIteraciones;
 
 typedef struct __counter_t {
   int value;
@@ -42,16 +43,27 @@ void *thread_function(void *arg) {
   int cpu = sched_getcpu();
   printf("Hilo %d iniciado en el núcleo %d\n", thread_id, cpu);
   int i;
-  for (i = 0; i < 2000000; i++) {
+  for (i = 0; i < nroIteraciones; i++) {
     increment(&counter);
   }
   printf("Hilo %d terminado\n", thread_id);
   return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   init(&counter);
   int numThreads = 32;
+  nroIteraciones = 2000000;
+  if(argc > 3) {
+    printf("Invalid arguments\n");
+    return 1;
+  }
+  if (argc > 1) {
+    nroIteraciones = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    numThreads = atoi(argv[2]);
+  }
   pthread_t threads[numThreads];
   int trhead_ids[numThreads];
 

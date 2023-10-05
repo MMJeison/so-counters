@@ -9,6 +9,8 @@
 // numero de CPUs
 #define NUMCPUS 8
 
+int nroIteraciones;
+
 typedef struct __counter_t {
   int global; // global count
   pthread_mutex_t glock; // global lock
@@ -30,18 +32,6 @@ void init(counter_t *c, int threshold) {
   }
 }
 
-// void update(counter_t *c, int threadID) {
-//   int cpu = threadID % NUMCPUS;
-//   pthread_mutex_lock(&c->llock[cpu]);
-//   c->local[cpu] += 1;
-//   if (c->local[cpu] >= c->threshold) { // transfer to global (synchronization point)
-//     pthread_mutex_lock(&c->glock);
-//     c->global += c->local[cpu];
-//     pthread_mutex_unlock(&c->glock);
-//     c->local[cpu] = 0;
-//   }
-//   pthread_mutex_unlock(&c->llock[cpu]);
-// }
 
 void update(counter_t *c, int cpu) {
   // int cpu = threadID % NUMCPUS;
@@ -68,10 +58,10 @@ counter_t *c;
 
 void *thread_function(void *arg) {
     int thread_id = *((int *)arg);
-    int cpu = sched_getcpu();
+    int cpu = sched_getcpu(); // get CPU where thread is running
     printf("Hilo %d iniciado en el núcleo %d\n", thread_id, cpu);
     int i;
-    for (i = 0; i < 2000000; i++) {
+    for (i = 0; i < nroIteraciones; i++) {
         update(c, cpu);
     }
     printf("Hilo %d terminado\n", thread_id);
@@ -80,8 +70,26 @@ void *thread_function(void *arg) {
 
 int main(int argc, char *argv[]) {
   c = malloc(sizeof(counter_t));
-  init(c, 10000);
+  int threshold = 10000;
+  nroIteraciones = 2000000;
   int numThreads = 32;
+  if (argc > 4) {
+    printf("Invalid arguments\n");
+    return 1;
+  }
+  if (argc > 1) {
+    nroIteraciones = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    numThreads = atoi(argv[2]);
+  }
+  if (argc > 3) {
+    threshold = atoi(argv[3]);
+  }
+
+
+  init(c, threshold);
+
   pthread_t threads[32];
   int thread_ids[32];
 
